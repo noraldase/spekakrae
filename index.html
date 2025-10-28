@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spark AI</title>
     <style>
-        /* CSS untuk Tampilan */
+        /* CSS (Tidak ada perubahan) */
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
@@ -168,25 +168,25 @@
         </header>
 
         <div id="rateLimitMessage" class="hidden">
-            Anda telah mencapai batas 5 pesan trial. Silakan hubungkan wallet Anda untuk melanjutkan.
+            You have reached the 5-message trial limit. Please connect your wallet to continue.
         </div>
 
         <div id="chat-box">
             <div class="message bot-message">
-                Selamat datang di Spark AI! Anda memiliki 5 pesan trial. Hubungkan wallet Anda untuk chat tanpa batas.
+                Welcome to Spark AI! You have 5 trial messages. Connect your wallet for unlimited chat.
             </div>
         </div>
 
         <form id="chat-form">
-            <input type="text" id="chat-input" placeholder="Ketik pesan Anda...">
-            <button type="submit">Kirim</button>
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button type="submit">Send</button>
         </form>
     </div>
 
     <script>
-        // JavaScript untuk Logika Aplikasi
+        // JavaScript Logic
         document.addEventListener('DOMContentLoaded', () => {
-            // Selektor Elemen
+            // Element Selectors
             const chatBox = document.getElementById('chat-box');
             const chatForm = document.getElementById('chat-form');
             const chatInput = document.getElementById('chat-input');
@@ -194,39 +194,41 @@
             const rateLimitMessage = document.getElementById('rateLimitMessage');
             const sendButton = chatForm.querySelector('button');
 
-            // Variabel Status
+            // Status Variables
             let userAddress = null;
-            // Ambil data dari 'cache browser' (localStorage)
+            // Get data from 'browser cache' (localStorage)
             let messageCount = parseInt(localStorage.getItem('sparkAIMessageCount') || '0');
 
-            // --- 1. Inisialisasi & Cek Status Login ---
+            // --- 1. Initialization & Login Status Check ---
             function initialize() {
                 const storedAddress = localStorage.getItem('sparkAIUserAddress');
                 if (storedAddress) {
                     userAddress = storedAddress;
                     updateUIForLoggedIn();
                 } else {
-                    // Jika belum login, cek apakah dia sudah kena rate limit
+                    // If not logged in, check if they hit the rate limit
                     checkRateLimit();
                 }
             }
 
             function updateUIForLoggedIn() {
-                // Tampilkan alamat wallet yang disingkat
+                // Display truncated wallet address
                 connectWalletBtn.textContent = `Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
                 connectWalletBtn.disabled = true;
-                // Sembunyikan pesan rate limit dan aktifkan input
+                // Hide rate limit message and enable input
                 rateLimitMessage.classList.add('hidden');
                 chatInput.disabled = false;
                 sendButton.disabled = false;
-                chatInput.placeholder = "Anda terhubung. Tanyakan apa saja...";
+                // DIUBAH
+                chatInput.placeholder = "You are connected. Ask anything...";
             }
 
             function checkRateLimit() {
                 if (messageCount >= 5) {
                     showRateLimit();
                 } else {
-                    addMessage(`Anda memiliki ${5 - messageCount} pesan trial tersisa.`, 'bot');
+                    // DIUBAH
+                    addMessage(`You have ${5 - messageCount} trial messages remaining.`, 'bot');
                 }
             }
 
@@ -234,34 +236,39 @@
                 rateLimitMessage.classList.remove('hidden');
                 chatInput.disabled = true;
                 sendButton.disabled = true;
-                chatInput.placeholder = "Batas trial habis. Hubungkan wallet.";
+                // DIUBAH
+                chatInput.placeholder = "Trial limit reached. Connect wallet.";
             }
 
-            // --- 2. Fungsi Koneksi Wallet ---
+            // --- 2. Wallet Connection Function ---
             async function connectWallet() {
                 if (typeof window.ethereum !== 'undefined') {
                     try {
-                        // Meminta izin pengguna untuk terhubung
+                        // Request user permission to connect
                         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                         userAddress = accounts[0];
                         
-                        // Simpan alamat wallet ke localStorage
+                        // Save wallet address to localStorage
                         localStorage.setItem('sparkAIUserAddress', userAddress);
                         
-                        // Perbarui UI
+                        // Update UI
                         updateUIForLoggedIn();
-                        addMessage('Wallet berhasil terhubung!', 'bot');
+                        // DIUBAH
+                        addMessage('Wallet connected successfully!', 'bot');
 
                     } catch (error) {
-                        console.error('Koneksi wallet gagal:', error);
-                        addMessage('Gagal menghubungkan wallet. Coba lagi.', 'bot');
+                        // DIUBAH
+                        console.error('Wallet connection failed:', error);
+                        // DIUBAH
+                        addMessage('Failed to connect wallet. Please try again.', 'bot');
                     }
                 } else {
-                    alert('MetaMask tidak terdeteksi! Harap install MetaMask untuk menggunakan fitur ini.');
+                    // DIUBAH
+                    alert('MetaMask not detected! Please install MetaMask to use this feature.');
                 }
             }
 
-            // --- 3. Fungsi Pengiriman Chat ---
+            // --- 3. Chat Submission Function ---
             async function handleChatSubmit(event) {
                 event.preventDefault();
                 const userMessage = chatInput.value.trim();
@@ -271,28 +278,30 @@
                 addMessage(userMessage, 'user');
                 chatInput.value = '';
 
-                // --- Logika Rate Limit untuk Trial ---
-                if (!userAddress) { // Jika user BELUM login wallet
+                // --- Trial Rate Limit Logic ---
+                if (!userAddress) { // If user is NOT logged in
                     messageCount++;
-                    // Simpan hitungan ke localStorage
+                    // Save count to localStorage
                     localStorage.setItem('sparkAIMessageCount', messageCount);
 
                     if (messageCount > 5) {
                         showRateLimit();
-                        addMessage('Anda telah melebihi 5 pesan gratis. Harap hubungkan wallet Anda.', 'bot');
-                        return; // Hentikan proses
+                        // DIUBAH
+                        addMessage('You have exceeded the 5 free messages. Please connect your wallet.', 'bot');
+                        return; // Stop processing
                     }
                 }
                 
-                // Jika user sudah login ATAU masih dalam masa trial, panggil API
-                // Tampilkan indikator "mengetik"
-                const typingIndicator = addMessage('Spark AI sedang berpikir...', 'bot');
+                // If user is logged in OR still in trial, call API
+                // Show "thinking" indicator
+                // DIUBAH
+                const typingIndicator = addMessage('Spark AI is thinking...', 'bot');
                 
                 try {
                     const botResponse = await callMockGeminiAPI(userMessage);
-                    // Hapus indikator "mengetik"
+                    // Remove "thinking" indicator
                     chatBox.removeChild(typingIndicator);
-                    // Tampilkan respons bot
+                    // Show bot response
                     addMessage(botResponse, 'bot');
                 } catch (error) {
                     chatBox.removeChild(typingIndicator);
@@ -300,23 +309,23 @@
                 }
             }
 
-            // --- 4. Fungsi Menambahkan Pesan ke UI ---
+            // --- 4. Function to Add Message to UI ---
             function addMessage(text, sender) {
                 const messageElement = document.createElement('div');
                 messageElement.classList.add('message', `${sender}-message`);
                 messageElement.textContent = text;
                 chatBox.appendChild(messageElement);
-                // Auto-scroll ke pesan terbaru
+                // Auto-scroll to the latest message
                 chatBox.scrollTop = chatBox.scrollHeight;
                 return messageElement;
             }
 
-            // --- 5. PANGGILAN API (MOCKUP) ---
+            // --- 5. API CALL ---
             async function callMockGeminiAPI(message) {
-                // Ganti dengan IP Address VPS Anda yang sebenarnya
                 const backendUrl = 'https://api.spark-ai.xyz/chat'; 
                 
-                console.log(`Mengirim pesan ke backend: ${message}`);
+                // DIUBAH
+                console.log(`Sending message to backend: ${message}`);
 
                 try {
                     const response = await fetch(backendUrl, {
@@ -324,26 +333,28 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ prompt: message }) // Kirim pesan dalam format JSON
+                        body: JSON.stringify({ prompt: message }) // Send message in JSON format
                     });
 
                     if (!response.ok) {
-                        // Jika server mengembalikan error (misal: 500)
+                        // If the server returns an error (e.g., 500)
                         throw new Error(`Server error: ${response.statusText}`);
                     }
 
                     const data = await response.json();
                     
                     if (data.error) {
-                         // Jika server mengembalikan pesan error yang spesifik
+                         // If the server returns a specific error message
                         throw new Error(data.error);
                     }
 
-                    return data.text; // Kembalikan teks dari respons JSON
+                    return data.text; // Return text from the JSON response
 
                 } catch (error) {
-                    console.error('Gagal mengambil data dari backend:', error);
-                    return `Maaf, terjadi kesalahan saat terhubung ke server: ${error.message}`;
+                    // DIUBAH
+                    console.error('Failed to retrieve data from backend:', error);
+                    // DIUBAH
+                    return `Sorry, an error occurred while connecting to the server: ${error.message}`;
                 }
             }
 
@@ -351,7 +362,7 @@
             connectWalletBtn.addEventListener('click', connectWallet);
             chatForm.addEventListener('submit', handleChatSubmit);
 
-            // Jalankan inisialisasi saat halaman dimuat
+            // Run initialization when the page loads
             initialize();
         });
     </script>
