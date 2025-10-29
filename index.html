@@ -380,14 +380,16 @@
 
                     const b402 = new B402();
                     const requirements = {
-                        scheme: 'exact',
-                        network: 'bsc',
-                        asset: '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d', // USD1_TOKEN
-                        payTo: SELLER_ADDRESS,
-                        amountRequired: ethers.parseUnits(amount, 18), // Konversi '$1' -> 1000...
-                        maxTimeoutSeconds: 600,
-                        relayerContract: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a'
-                    };
+                scheme: 'exact',
+                network: 'bsc-testnet', 
+                asset: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd', // USD1T
+                payTo: SELLER_ADDRESS,
+                amountRequired: ethers.parseUnits(amount, 18), 
+                maxTimeoutSeconds: 600,
+                
+                // (BENAR) Alamat Relayer BSC Testnet yang Benar
+                relayerContract: '0xd67eF16fa445101Ef1e1c6A9FB9F3014f1d60DE6' 
+            };
                     
                     try {
                         // 1. Minta Otorisasi dari MetaMask
