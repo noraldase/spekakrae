@@ -21,7 +21,7 @@ const CONFIG = {
     serverWallet: '0xbdDD85bc42010110B8184d0fDA25659688bf935E',
     
     // URL Backend Anda
-    backendUrl: 'https://api.spark.ai/spin'
+    backendUrl: 'https://api.spark.ai'
 };
 
 // ABI (Application Binary Interface) minimal untuk token ERC20
