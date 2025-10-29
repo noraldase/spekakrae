@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot x402</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="slot-machine">
+        <h1>SLOT-X-402</h1>
+        <p>Pay $1 (USDT) to spin and win!</p>
+        
+        <div class="slots-container">
+            <div class="slot" id="slot1">?</div>
+            <div class="slot" id="slot2">?</div>
+            <div class="slot" id="slot3">?</div>
+        </div>
+
+        <button id="spinButton">SPIN ($1)</button>
+
+        <div id="status">
+            <p>Please press the SPIN button.</p>
+        </div>
+
+        <div id="payment-info" class="hidden">
+            <h3>⚠️ Payment Required (HTTP 402)</h3>
+            <p>To continue, send the payment using the details below from your BNB Chain wallet.</p>
+            <pre id="payment-details"></pre>
+            <p>After paying, you must build the logic to check the result.</p>
+        </div>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>
