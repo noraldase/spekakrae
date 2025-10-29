@@ -1,0 +1,85 @@
+// public/client.js
+const spinButton = document.getElementById('spinButton');
+const slot1 = document.getElementById('slot1');
+const slot2 = document.getElementById('slot2');
+const slot3 = document.getElementById('slot3');
+const status = document.getElementById('status');
+const paymentInfoBox = document.getElementById('payment-info');
+const paymentDetails = document.getElementById('payment-details');
+
+const API_URL = 'http://localhost:3000'; // Your backend URL
+
+spinButton.addEventListener('click', handleSpin);
+
+async function handleSpin() {
+    status.textContent = 'Contacting server...';
+    paymentInfoBox.classList.add('hidden');
+    spinButton.disabled = true;
+
+    try {
+        const response = await fetch(`${API_URL}/spin`);
+
+        if (response.status === 402) {
+            // --- CASE 1: PAYMENT IS REQUIRED ---
+            const data = await response.json();
+            
+            // Show payment details
+            status.textContent = '⚠️ Payment required. Check details below.';
+            paymentDetails.textContent = JSON.stringify(data, null, 2);
+            paymentInfoBox.classList.remove('hidden');
+
+            /*
+            ======================================================================
+            !!! CRITICAL MISSING PIECE (YOUR TASK) !!!
+            ======================================================================
+            This is where you must trigger the user's crypto wallet (e.g., MetaMask)
+            using ethers.js or web3.js to send the transaction
+            based on the 'data' (paymentDetails) received.
+            
+            Example (PSEUDOCODE, NOT REAL CODE):
+            
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            
+            // Create a contract for the token (e.g., USDT)
+            const tokenContract = new ethers.Contract(data.token, ERC20_ABI, signer);
+            
+            // Send the token to the Relayer
+            const tx = await tokenContract.transfer(data.relayer, data.amount);
+            await tx.wait();
+            
+            // After the transaction is complete, you must call /spin AGAIN
+            // or have a way for the server to know.
+            
+            status.textContent = 'Payment sent! Try spinning again to check the result.';
+            ======================================================================
+            */
+
+        } else if (response.ok) {
+            // --- CASE 2: PAYMENT ALREADY VERIFIED ---
+            const gameResult = await response.json();
+            
+            // Display the result on the slots
+            slot1.textContent = gameResult.result[0];
+            slot2.textContent = gameResult.result[1];
+            slot3.textContent = gameResult.result[2];
+
+            if (gameResult.winnings > 0) {
+                status.textContent = `🎉 Congratulations! You won ${gameResult.winnings} USD!`;
+            } else {
+                status.textContent = 'Not lucky this time. Try again!';
+            }
+
+        } else {
+            // Other server errors
+            status.textContent = `Error: ${response.status} - ${response.statusText}`;
+        }
+
+    } catch (error) {
+        status.textContent = 'Failed to connect to server. Is it running?';
+        console.error(error);
+    } finally {
+        spinButton.disabled = false;
+    }
+}
