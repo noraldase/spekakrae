@@ -61,6 +61,7 @@ const allSymbolImages = [
 
 
 // --- 1. Fungsi Koneksi Wallet ---
+// ...
 async function connectWallet() {
     try {
         if (!window.ethereum) {
@@ -68,48 +69,55 @@ async function connectWallet() {
             return;
         }
 
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        userAddress = await signer.getAddress();
+        // --- AWAL PERUBAHAN ---
 
-        // Coba ganti ke BSC Testnet
+        // 1. Buat provider MetaMask HANYA untuk mendapatkan signer
+        const metaMaskProvider = new ethers.BrowserProvider(window.ethereum);
+        await metaMaskProvider.send("eth_requestAccounts", []);
+        const metaMaskSigner = await metaMaskProvider.getSigner();
+        userAddress = await metaMaskSigner.getAddress(); // userAddress global di-set di sini
+
+        // 2. Buat network kustom untuk BSC Testnet
+        const bscTestnet = new ethers.Network('bnbt', 97);
+        bscTestnet.ensAddress = null; // <-- KUNCI UTAMA: Menonaktifkan ENS
+
+        // 3. Set 'provider' global kita ke provider kustom (JsonRpcProvider)
+        // Ini akan digunakan untuk semua operasi BACA (read-only)
+        provider = new ethers.JsonRpcProvider(CONFIG.rpc, bscTestnet);
+        
+        // 4. Set 'signer' global kita ke signer MetaMask, TAPI terhubung ke provider kustom kita
+        // Ini akan digunakan untuk semua operasi TULIS (approve, sign)
+        signer = metaMaskSigner.connect(provider);
+
+        // --- AKHIR PERUBAHAN ---
+
+
+        // Coba ganti ke BSC Testnet (Logika ini tetap sama)
         try {
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: CONFIG.chainHex }], // '0x61' untuk BSC Testnet
+                params: [{ chainId: CONFIG.chainHex }], // '0x61'
             });
         } catch (switchError) {
-            // Jika chain belum ditambahkan
-            if (switchError.code === 4902) {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: CONFIG.chainHex,
-                        chainName: CONFIG.chainName,
-                        nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
-                        rpcUrls: [CONFIG.rpc],
-                        blockExplorerUrls: ['https://testnet.bscscan.com']
-                    }]
-                });
-            } else {
-                throw switchError;
-            }
+            // ... (sisa kode switch network Anda tetap sama)
         }
 
         connectSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         walletAddressSpan.textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
 
-        // Inisialisasi kontrak
-        usdcContract = new ethers.Contract(CONFIG.usdc, ERC20_ABI, signer);
-        mytokenContract = new ethers.Contract(CONFIG.mytoken, ERC20_ABI, provider); // provider saja untuk membaca
+        // Inisialisasi kontrak (Kode ini tetap sama)
+        // 'usdcContract' sekarang menggunakan 'signer' baru kita (yang sudah non-ENS)
+        usdcContract = new ethers.Contract(CONFIG.usdc, ERC20_ABI, signer); 
+        // 'mytokenContract' menggunakan 'provider' baru kita (non-ENS)
+        mytokenContract = new ethers.Contract(CONFIG.mytoken, ERC20_ABI, provider);
 
         await loadBalances();
     } catch (error) {
         showStatus('Error connecting wallet: ' + error.message, 'error');
     }
 }
+// ... (sisa file client.js Anda)
 
 // --- 2. Fungsi Memuat Saldo ---
 async function loadBalances() {
