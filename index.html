@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spark AI</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@b402/web-provider@latest/dist/b402.js"></script>
+
     <style>
-        /* CSS (Tidak ada perubahan) */
+        /* CSS untuk Tampilan */
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
@@ -87,6 +92,7 @@
             border-radius: 18px;
             max-width: 75%;
             line-height: 1.5;
+            word-wrap: break-word;
         }
 
         .user-message {
@@ -154,29 +160,28 @@
             font-size: 0.9rem;
         }
 
-        /* ... (CSS Anda yang lain ada di sini) ... */
-
-.mint-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 0.25rem 0;
-    display: block;
-    width: 100%;
-    box-sizing: border-box; /* Memastikan padding tidak merusak lebar */
-    transition: background-color 0.2s;
-}
-
-.mint-button:hover {
-    background-color: #0056b3;
-}
-
         .hidden {
             display: none;
+        }
+
+        /* (BARU) CSS untuk Tombol Mint */
+        .mint-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0.25rem 0;
+            display: block;
+            width: 100%;
+            box-sizing: border-box; 
+            transition: background-color 0.2s;
+        }
+
+        .mint-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -194,7 +199,7 @@
 
         <div id="chat-box">
             <div class="message bot-message">
-                Welcome to Spark AI! You have 5 trial messages. Connect your wallet for unlimited chat.
+                Welcome to Spark AI! You have 5 trial messages. Connect your wallet for unlimited chat. Type /mint to see minting options.
             </div>
         </div>
 
@@ -206,219 +211,252 @@
 
     <script>
         // JavaScript Logic
-        
         document.addEventListener('DOMContentLoaded', () => {
-    // Element Selectors
-    const chatBox = document.getElementById('chat-box');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const connectWalletBtn = document.getElementById('connectWalletBtn');
-    const rateLimitMessage = document.getElementById('rateLimitMessage');
-    const sendButton = chatForm.querySelector('button');
+            // Element Selectors
+            const chatBox = document.getElementById('chat-box');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const rateLimitMessage = document.getElementById('rateLimitMessage');
+            const sendButton = chatForm.querySelector('button');
 
-    // Status Variables
-    let userAddress = null;
-    let messageCount = parseInt(localStorage.getItem('sparkAIMessageCount') || '0');
+            // Status Variables
+            let userAddress = null;
+            let messageCount = parseInt(localStorage.getItem('sparkAIMessageCount') || '0');
 
-    // --- 1. Initialization & Login Status Check ---
-    function initialize() {
-        const storedAddress = localStorage.getItem('sparkAIUserAddress');
-        if (storedAddress) {
-            userAddress = storedAddress;
-            updateUIForLoggedIn();
-        } else {
-            checkRateLimit();
-        }
-    }
-
-    function updateUIForLoggedIn() {
-        connectWalletBtn.textContent = `Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
-        connectWalletBtn.disabled = true;
-        rateLimitMessage.classList.add('hidden');
-        chatInput.disabled = false;
-        sendButton.disabled = false;
-        chatInput.placeholder = "You are connected. Ask anything or type /mint";
-    }
-
-    function checkRateLimit() {
-        if (messageCount >= 5) {
-            showRateLimit();
-        } else {
-            addMessage(`You have ${5 - messageCount} trial messages remaining.`, 'bot');
-        }
-    }
-
-    function showRateLimit() {
-        rateLimitMessage.classList.remove('hidden');
-        chatInput.disabled = true;
-        sendButton.disabled = true;
-        chatInput.placeholder = "Trial limit reached. Connect wallet.";
-    }
-
-    // --- 2. Wallet Connection Function ---
-    async function connectWallet() {
-        if (typeof window.ethereum !== 'undefined') {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAddress = accounts[0];
-                localStorage.setItem('sparkAIUserAddress', userAddress);
-                updateUIForLoggedIn();
-                addMessage('Wallet connected successfully!', 'bot');
-            } catch (error) {
-                console.error('Wallet connection failed:', error);
-                addMessage('Failed to connect wallet. Please try again.', 'bot');
+            // --- 1. Initialization & Login Status Check ---
+            function initialize() {
+                const storedAddress = localStorage.getItem('sparkAIUserAddress');
+                if (storedAddress) {
+                    userAddress = storedAddress;
+                    updateUIForLoggedIn();
+                } else {
+                    checkRateLimit();
+                }
             }
-        } else {
-            alert('MetaMask not detected! Please install MetaMask to use this feature.');
-        }
-    }
 
-    // --- 3. Chat Submission Function (DIMODIFIKASI) ---
-    async function handleChatSubmit(event) {
-        event.preventDefault();
-        const userMessage = chatInput.value.trim();
-        if (!userMessage) return;
-
-        addMessage(userMessage, 'user');
-        chatInput.value = '';
-
-        // --- (BARU) Logika Perintah /mint ---
-        if (userMessage.toLowerCase() === '/mint') {
-            if (!userAddress) {
-                addMessage("Please connect your wallet first to use the /mint command.", 'bot');
-                return;
+            function updateUIForLoggedIn() {
+                connectWalletBtn.textContent = `Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
+                connectWalletBtn.disabled = true;
+                rateLimitMessage.classList.add('hidden');
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.placeholder = "You are connected. Ask anything or type /mint";
             }
-            // Tampilkan tombol, jangan panggil API chat
-            showMintButtons(); 
-            return;
-        }
 
-        // --- Logika Rate Limit (Seperti sebelumnya) ---
-        if (!userAddress) {
-            messageCount++;
-            localStorage.setItem('sparkAIMessageCount', messageCount);
-            if (messageCount > 5) {
-                showRateLimit();
-                addMessage('You have exceeded the 5 free messages. Please connect your wallet.', 'bot');
-                return;
+            function checkRateLimit() {
+                if (messageCount >= 5) {
+                    showRateLimit();
+                } else {
+                    addMessage(`You have ${5 - messageCount} trial messages remaining.`, 'bot');
+                }
             }
-        }
-        
-        // --- Panggil API Chat (Seperti sebelumnya) ---
-        const typingIndicator = addMessage('Spark AI is thinking...', 'bot');
-        try {
-            const botResponse = await callGeminiAPI(userMessage);
-            chatBox.removeChild(typingIndicator);
-            addMessage(botResponse, 'bot');
-        } catch (error) {
-            chatBox.removeChild(typingIndicator);
-            addMessage(`Error: ${error.message}`, 'bot');
-        }
-    }
 
-    // --- 4. Function to Add Message to UI (DIMODIFIKASI) ---
-    // Sekarang memiliki argumen 'isHtml' untuk merender tombol
-    function addMessage(text, sender, isHtml = false) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message', `${sender}-message`);
-        
-        if (isHtml) {
-            messageElement.innerHTML = text; // Untuk merender HTML tombol
-        } else {
-            messageElement.textContent = text; // Untuk teks biasa
-        }
-        
-        chatBox.appendChild(messageElement);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return messageElement;
-    }
-    
-    // --- (BARU) Fungsi untuk Menampilkan Tombol Mint ---
-    function showMintButtons() {
-        const buttonHtml = `
-            <p>Please select a minting option:</p>
-            <button class="mint-button" data-amount="1" data-tokens="5000">Mint 1$ for 5,000 tokens</button>
-            <button class="mint-button" data-amount="10" data-tokens="50000">Mint 10$ for 50,000 tokens</button>
-        `;
-        // 'true' memberitahu addMessage untuk merender ini sebagai HTML
-        addMessage(buttonHtml, 'bot', true);
-    }
-    
-    // --- (BARU) Fungsi untuk Menangani Klik Tombol Mint ---
-    // Kita menambahkan satu event listener ke chatBox untuk menangani semua klik tombol
-    chatBox.addEventListener('click', async (event) => {
-        if (event.target.classList.contains('mint-button')) {
-            // Nonaktifkan tombol untuk mencegah klik ganda
-            event.target.disabled = true;
-            event.target.textContent = "Processing...";
+            function showRateLimit() {
+                rateLimitMessage.classList.remove('hidden');
+                chatInput.disabled = true;
+                sendButton.disabled = true;
+                chatInput.placeholder = "Trial limit reached. Connect wallet.";
+            }
 
-            const amount = event.target.dataset.amount;
-            const tokens = event.target.dataset.tokens;
+            // --- 2. Wallet Connection Function ---
+            async function connectWallet() {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        userAddress = accounts[0];
+                        localStorage.setItem('sparkAIUserAddress', userAddress);
+                        updateUIForLoggedIn();
+                        addMessage('Wallet connected successfully!', 'bot');
+                    } catch (error) {
+                        console.error('Wallet connection failed:', error);
+                        addMessage('Failed to connect wallet. Please try again.', 'bot');
+                    }
+                } else {
+                    alert('MetaMask not detected! Please install MetaMask to use this feature.');
+                }
+            }
 
-            // Panggil API backend /mint
-            try {
-                const response = await fetch('https://api.spark-ai.xyz/accept-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        amount: parseInt(amount),
-                        tokens: parseInt(tokens),
-                        walletAddress: userAddress 
-                    })
-                });
+            // --- 3. Chat Submission Function (Handles /mint) ---
+            async function handleChatSubmit(event) {
+                event.preventDefault();
+                const userMessage = chatInput.value.trim();
+                if (!userMessage) return;
 
-                const data = await response.json();
+                addMessage(userMessage, 'user');
+                chatInput.value = '';
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Minting process failed.');
+                // --- /mint Command Logic ---
+                if (userMessage.toLowerCase() === '/mint') {
+                    if (!userAddress) {
+                        addMessage("Please connect your wallet first to use the /mint command.", 'bot');
+                        return;
+                    }
+                    // Show buttons, do not call Gemini
+                    showMintButtons(); 
+                    return;
+                }
+
+                // --- Trial Rate Limit Logic ---
+                if (!userAddress) {
+                    messageCount++;
+                    localStorage.setItem('sparkAIMessageCount', messageCount);
+                    if (messageCount > 5) {
+                        showRateLimit();
+                        addMessage('You have exceeded the 5 free messages. Please connect your wallet.', 'bot');
+                        return;
+                    }
                 }
                 
-                // Tampilkan pesan sukses
-                addMessage(data.message, 'bot');
-
-            } catch (error) {
-                console.error('Minting failed:', error);
-                addMessage(`Minting failed: ${error.message}`, 'bot');
-                // Aktifkan kembali tombol jika gagal
-                event.target.disabled = false;
-                event.target.textContent = `Mint ${amount}$ for ${tokens} tokens`;
+                // --- Call Gemini Chat API ---
+                const typingIndicator = addMessage('Spark AI is thinking...', 'bot');
+                try {
+                    const botResponse = await callGeminiAPI(userMessage);
+                    chatBox.removeChild(typingIndicator);
+                    addMessage(botResponse, 'bot');
+                } catch (error) {
+                    chatBox.removeChild(typingIndicator);
+                    addMessage(`Error: ${error.message}`, 'bot');
+                }
             }
-        }
-    });
 
-    // --- 5. API CALL (Nama diganti) ---
-    async function callGeminiAPI(message) { // diganti nama dari callMockGeminiAPI
-        const backendUrl = 'https://api.spark-ai.xyz/chat'; 
-        console.log(`Sending message : ${message}`);
-        try {
-            const response = await fetch(backendUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: message })
+            // --- 4. Function to Add Message to UI (Handles HTML) ---
+            function addMessage(text, sender, isHtml = false) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message', `${sender}-message`);
+                
+                if (isHtml) {
+                    messageElement.innerHTML = text; // Renders HTML (for buttons)
+                } else {
+                    messageElement.textContent = text; // Renders plain text
+                }
+                
+                chatBox.appendChild(messageElement);
+                chatBox.scrollTop = chatBox.scrollHeight;
+                return messageElement;
+            }
+            
+            // --- 5. Function to Show Mint Buttons ---
+            function showMintButtons() {
+                const buttonHtml = `
+                    <p>Please select a minting option:</p>
+                    <button class="mint-button" data-amount="1" data-tokens="5000">Mint 1$ for 5,000 tokens</button>
+                    <button class="mint-button" data-amount="10" data-tokens="50000">Mint 10$ for 50,000 tokens</button>
+                `;
+                addMessage(buttonHtml, 'bot', true);
+            }
+            
+            // --- 6. B402 Mint Button Click Handler (LOGIKA UTAMA) ---
+            chatBox.addEventListener('click', async (event) => {
+                if (event.target.classList.contains('mint-button')) {
+                    
+                    event.target.disabled = true;
+                    event.target.textContent = "Please check MetaMask...";
+
+                    const amount = event.target.dataset.amount;
+                    const tokens = event.target.dataset.tokens;
+
+                    // Check if B402 library is loaded
+                    if (typeof B402 === 'undefined') {
+                        addMessage('Error: B402 library not loaded. Please refresh.', 'bot');
+                        event.target.disabled = false;
+                        return;
+                    }
+                    
+                    // =================================================================
+                    // !!! PENTING !!!
+                    // GANTI '0xAlamatWalletPenerimaAnda' DENGAN SELLER_ADDRESS ANDA
+                    // Ini harus SAMA PERSIS dengan yang ada di file .env di VPS Anda
+                    // =================================================================
+                    const SELLER_ADDRESS = '0xAlamatWalletPenerimaAnda'; 
+                    // =================================================================
+
+                    if (SELLER_ADDRESS === '0xAlamatWalletPenerimaAnda') {
+                        addMessage('Error: Frontend is not configured. Please contact the site administrator.', 'bot');
+                        event.target.disabled = false;
+                        event.target.textContent = `Mint ${amount}$ for ${tokens} tokens`;
+                        return;
+                    }
+
+                    const b402 = new B402();
+                    const requirements = {
+                        scheme: 'exact',
+                        network: 'bsc',
+                        asset: '0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d', // USD1_TOKEN
+                        payTo: SELLER_ADDRESS,
+                        amountRequired: ethers.parseUnits(amount, 18), // Konversi '$1' -> 1000...
+                        maxTimeoutSeconds: 600,
+                        relayerContract: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a'
+                    };
+                    
+                    try {
+                        // 1. Minta Otorisasi dari MetaMask
+                        const { authorization, signature } = await b402.authorize(requirements);
+                        
+                        event.target.textContent = "Authorizing... Settling...";
+
+                        // 2. Kirim Otorisasi ke Backend untuk Diselesaikan
+                        const response = await fetch('https://api.spark-ai.xyz/accept-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                authorization: authorization,
+                                signature: signature
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.error || 'Minting process failed on server.');
+                        }
+
+                        // 3. Sukses!
+                        addMessage(`Success! Payment of ${data.amount} USD1 received. Tx: ${data.transaction}`, 'bot');
+                        event.target.textContent = "Minted!";
+                        event.target.style.backgroundColor = "#28a745"; // Jadi hijau
+
+                    } catch (error) {
+                        console.error('B402 Minting failed:', error);
+                        addMessage(`Minting failed: ${error.message}`, 'bot');
+                        // Aktifkan kembali tombol jika gagal
+                        event.target.disabled = false;
+                        event.target.textContent = `Mint ${amount}$ for ${tokens} tokens`;
+                    }
+                }
             });
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.statusText}`);
-            }
-            const data = await response.json();
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            return data.text;
-        } catch (error) {
-            console.error('Failed to retrieve data from backend:', error);
-            return `Sorry, an error occurred while connecting to the server: ${error.message}`;
-        }
-    }
 
-    // --- Event Listeners ---
-    connectWalletBtn.addEventListener('click', connectWallet);
-    chatForm.addEventListener('submit', handleChatSubmit);
+            // --- 7. Gemini Chat API Call ---
+            async function callGeminiAPI(message) { 
+                const backendUrl = 'https://api.spark-ai.xyz/chat'; 
+                console.log(`Sending message to backend: ${message}`);
+                try {
+                    const response = await fetch(backendUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: message })
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    return data.text;
+                } catch (error) {
+                    console.error('Failed to retrieve data from backend:', error);
+                    return `Sorry, an error occurred while connecting to the server: ${error.message}`;
+                }
+            }
 
-    // Run initialization
-    initialize();
-});
+            // --- 8. Event Listeners (Bottom) ---
+            connectWalletBtn.addEventListener('click', connectWallet);
+            chatForm.addEventListener('submit', handleChatSubmit);
+
+            // --- 9. Run Initialization ---
+            initialize();
+        });
     </script>
 </body>
 </html>
