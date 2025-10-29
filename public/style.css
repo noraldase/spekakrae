@@ -1,105 +1,212 @@
 /* public/style.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
-    /* GANTI 'background.jpg' dengan nama file latar belakang Anda */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Kita gunakan background dari game slot */
     background-image: url('images/background.jpg');
     background-size: cover;
     background-position: center;
-    color: white;
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
-    text-shadow: 2px 2px 4px #000;
-}
-
-.slot-machine {
-    background-color: rgba(51, 51, 51, 0.8); /* Dibuat semi-transparan */
-    border: 5px solid gold;
-    border-radius: 10px;
+    justify-content: center;
     padding: 20px;
-    text-align: center;
-    width: 450px; /* Sedikit lebih lebar */
-    backdrop-filter: blur(5px); /* Efek blur di belakang panel */
 }
 
+.container {
+    background: rgba(255, 255, 255, 0.95); /* Sedikit transparan */
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    backdrop-filter: blur(5px);
+}
+
+h1 {
+    color: #667eea;
+    margin-bottom: 10px;
+    font-size: 28px;
+    text-align: center;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ================================================
+GAYA UNTUK SLOT MACHINE
+================================================
+*/
 .slots-container {
     display: flex;
     justify-content: space-around;
-    margin: 20px 0;
+    margin: 25px 0;
 }
 
 .slot {
-    width: 120px; /* Sedikit lebih besar */
-    height: 120px;
+    width: 100px; 
+    height: 100px;
     background-color: #f0f0f0;
-    border: 2px solid #555;
-    border-radius: 5px;
+    border: 3px solid #667eea;
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* Sembunyikan jika gambar terlalu besar */
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Mengatur gaya gambar di dalam slot */
 .slot img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Membuat gambar pas */
+    object-fit: cover;
 }
 
-/* Kelas animasi: tambahkan efek blur atau ganti dengan GIF */
 .slot img.spinning {
-    filter: blur(5px); /* Efek blur sederhana */
-    /* ATAU, jika Anda punya Spinning.gif:
-    content: url('images/Spinning.gif'); 
-    */
+    filter: blur(5px);
+}
+/* ================================== */
+
+.card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
-#spinButton {
-    background-color: gold;
+.card h3 {
     color: #333;
-    font-size: 1.5em;
-    padding: 15px 30px;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.info-row span:first-child {
+    color: #666;
+}
+
+.info-row span:last-child {
+    color: #333;
+    font-weight: 600;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
     border: none;
-    border-radius: 5px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
 }
 
-#spinButton:hover {
-    background-color: #ffd700;
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
-#spinButton:disabled {
-    background-color: #999;
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
-#status {
-    margin-top: 20px;
-    font-size: 1.2em;
-    min-height: 50px; /* Beri ruang agar tidak lompat-lompat */
+.status {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    text-align: center;
 }
 
-#payment-info {
-    margin-top: 15px;
-    background-color: rgba(68, 68, 68, 0.9);
+.status-info {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-success {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-error {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.step {
     padding: 10px;
-    border-radius: 5px;
-    text-align: left;
-    border: 1px dashed orange;
+    border-left: 3px solid #ccc;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #666;
 }
 
-#payment-info pre {
-    background-color: #222;
-    padding: 10px;
-    border-radius: 5px;
-    overflow-x: auto;
-    color: #fff;
+.step.active {
+    background: #f0f4ff;
+    color: #667eea;
+    font-weight: 600;
+    border-left-color: #667eea;
+}
+
+.step.completed {
+    color: #4caf50;
+    border-left-color: #4caf50;
 }
 
 .hidden {
     display: none;
+}
+
+.link {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.wallet-display {
+    background: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 15px;
+    word-break: break-all;
 }
