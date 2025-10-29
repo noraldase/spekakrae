@@ -372,7 +372,7 @@
                     const tokens = event.target.dataset.tokens;
 
                     if (typeof B402 === 'undefined') {
-                        addMessage('Error: B402 library not loaded. Please refresh.', 'bot');
+                        addMessage('Error: Error. Please refresh.', 'bot');
                         event.target.disabled = false;
                         return;
                     }
@@ -424,7 +424,7 @@
                         const data = await response.json();
 
                         if (!response.ok || !data.success) {
-                            throw new Error(data.error || 'Minting process failed on server.');
+                            throw new Error(data.error || 'Minting process failed.');
                         }
 
                         // 3. Sukses
@@ -434,7 +434,7 @@
                         event.target.style.backgroundColor = "#28a745";
 
                     } catch (error) {
-                        console.error('B402 Minting failed:', error);
+                        console.error('Minting failed:', error);
                         addMessage(`Minting failed: ${error.message}`, 'bot');
                         event.target.disabled = false;
                         event.target.textContent = `Mint ${amount}$ for ${tokens} tokens`;
