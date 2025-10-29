@@ -1,85 +1,105 @@
-// public/client.js
-const spinButton = document.getElementById('spinButton');
-const slot1 = document.getElementById('slot1');
-const slot2 = document.getElementById('slot2');
-const slot3 = document.getElementById('slot3');
-const status = document.getElementById('status');
-const paymentInfoBox = document.getElementById('payment-info');
-const paymentDetails = document.getElementById('payment-details');
+/* public/style.css */
+body {
+    font-family: 'Arial', sans-serif;
+    /* GANTI 'background.jpg' dengan nama file latar belakang Anda */
+    background-image: url('images/background.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-shadow: 2px 2px 4px #000;
+}
 
-const API_URL = 'http://localhost:3000'; // Your backend URL
+.slot-machine {
+    background-color: rgba(51, 51, 51, 0.8); /* Dibuat semi-transparan */
+    border: 5px solid gold;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    width: 450px; /* Sedikit lebih lebar */
+    backdrop-filter: blur(5px); /* Efek blur di belakang panel */
+}
 
-spinButton.addEventListener('click', handleSpin);
+.slots-container {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
 
-async function handleSpin() {
-    status.textContent = 'Contacting server...';
-    paymentInfoBox.classList.add('hidden');
-    spinButton.disabled = true;
+.slot {
+    width: 120px; /* Sedikit lebih besar */
+    height: 120px;
+    background-color: #f0f0f0;
+    border: 2px solid #555;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Sembunyikan jika gambar terlalu besar */
+}
 
-    try {
-        const response = await fetch(`${API_URL}/spin`);
+/* Mengatur gaya gambar di dalam slot */
+.slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Membuat gambar pas */
+}
 
-        if (response.status === 402) {
-            // --- CASE 1: PAYMENT IS REQUIRED ---
-            const data = await response.json();
-            
-            // Show payment details
-            status.textContent = '⚠️ Payment required. Check details below.';
-            paymentDetails.textContent = JSON.stringify(data, null, 2);
-            paymentInfoBox.classList.remove('hidden');
+/* Kelas animasi: tambahkan efek blur atau ganti dengan GIF */
+.slot img.spinning {
+    filter: blur(5px); /* Efek blur sederhana */
+    /* ATAU, jika Anda punya Spinning.gif:
+    content: url('images/Spinning.gif'); 
+    */
+}
 
-            /*
-            ======================================================================
-            !!! CRITICAL MISSING PIECE (YOUR TASK) !!!
-            ======================================================================
-            This is where you must trigger the user's crypto wallet (e.g., MetaMask)
-            using ethers.js or web3.js to send the transaction
-            based on the 'data' (paymentDetails) received.
-            
-            Example (PSEUDOCODE, NOT REAL CODE):
-            
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            const signer = provider.getSigner();
-            
-            // Create a contract for the token (e.g., USDT)
-            const tokenContract = new ethers.Contract(data.token, ERC20_ABI, signer);
-            
-            // Send the token to the Relayer
-            const tx = await tokenContract.transfer(data.relayer, data.amount);
-            await tx.wait();
-            
-            // After the transaction is complete, you must call /spin AGAIN
-            // or have a way for the server to know.
-            
-            status.textContent = 'Payment sent! Try spinning again to check the result.';
-            ======================================================================
-            */
+#spinButton {
+    background-color: gold;
+    color: #333;
+    font-size: 1.5em;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
 
-        } else if (response.ok) {
-            // --- CASE 2: PAYMENT ALREADY VERIFIED ---
-            const gameResult = await response.json();
-            
-            // Display the result on the slots
-            slot1.textContent = gameResult.result[0];
-            slot2.textContent = gameResult.result[1];
-            slot3.textContent = gameResult.result[2];
+#spinButton:hover {
+    background-color: #ffd700;
+}
 
-            if (gameResult.winnings > 0) {
-                status.textContent = `🎉 Congratulations! You won ${gameResult.winnings} USD!`;
-            } else {
-                status.textContent = 'Not lucky this time. Try again!';
-            }
+#spinButton:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
 
-        } else {
-            // Other server errors
-            status.textContent = `Error: ${response.status} - ${response.statusText}`;
-        }
+#status {
+    margin-top: 20px;
+    font-size: 1.2em;
+    min-height: 50px; /* Beri ruang agar tidak lompat-lompat */
+}
 
-    } catch (error) {
-        status.textContent = 'Failed to connect to server. Is it running?';
-        console.error(error);
-    } finally {
-        spinButton.disabled = false;
-    }
+#payment-info {
+    margin-top: 15px;
+    background-color: rgba(68, 68, 68, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    text-align: left;
+    border: 1px dashed orange;
+}
+
+#payment-info pre {
+    background-color: #222;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+    color: #fff;
+}
+
+.hidden {
+    display: none;
 }
