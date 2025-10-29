@@ -3,25 +3,25 @@
 // --- KONFIGURASI (Harus sesuai dengan server.js) ---
 const CONFIG = {
     // Info Jaringan (BSC Testnet)
-    rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    rpc: 'https://bsc-testnet-rpc.publicnode.com',
     chainId: 97, // BSC Testnet chainId
     chainHex: '0x61', // Hex untuk 97
     chainName: 'BSC Testnet',
 
     // Alamat Kontrak (GANTI DENGAN ALAMAT TESTNET ANDA)
     // Dapatkan alamat USDC palsu dari faucet BSC Testnet
-    usdc: '0x...Alamat_Kontrak_USDC_Testnet_Anda',
+    usdc: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
     // Token yang Anda berikan sebagai hadiah (buat token BEP20 Anda sendiri)
-    mytoken: '0x...Alamat_Kontrak_MYTOKEN_Testnet_Anda', 
+    mytoken: '0xde78E250b6d473d2418308428B4a74d46efBd148',
     
     // Alamat B402 Relayer (Ini tetap sama)
     relayer: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a',
     
     // Alamat dompet server Anda (dompet yang akan MENERIMA 1 USDC)
-    serverWallet: '0x...Alamat_SERVER_WALLET_Anda_Penerima_USDC',
+    serverWallet: '0xbdDD85bc42010110B8184d0fDA25659688bf935E',
     
     // URL Backend Anda
-    backendUrl: 'http://localhost:3000'
+    backendUrl: 'https://api.spark.ai/spin'
 };
 
 // ABI (Application Binary Interface) minimal untuk token ERC20
