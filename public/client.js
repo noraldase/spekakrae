@@ -1,27 +1,26 @@
-// public/client.js
+// client.js
 
-// --- KONFIGURASI (Harus sesuai dengan server.js) ---
+// --- 1. KONFIGURASI FRONTEND ---
 const CONFIG = {
     // Info Jaringan (BSC Testnet)
-    rpc: 'https://bsc-testnet-rpc.publicnode.com',
-    chainId: 97, // BSC Testnet chainId
-    chainHex: '0x61', // Hex untuk 97
+    rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    chainId: 97, 
+    chainHex: '0x61', 
     chainName: 'BSC Testnet',
 
-    // Alamat Kontrak (GANTI DENGAN ALAMAT TESTNET ANDA)
-    // Dapatkan alamat USDC palsu dari faucet BSC Testnet
+    // ==========================================================
+    // PERUBAHAN KRITIS: Ganti localhost dengan domain API Anda
+    // WAJIB menggunakan HTTPS agar browser tidak memblokir
+    backendUrl: 'https://api.spark-ai.xyz',
+    // ==========================================================
+
+    // GANTI DENGAN ALAMAT KONTRAK TESTNET ANDA
     usdc: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
-    // Token yang Anda berikan sebagai hadiah (buat token BEP20 Anda sendiri)
-    mytoken: '0xde78E250b6d473d2418308428B4a74d46efBd148',
+    mytoken: '0xde78E250b6d473d2418308428B4a74d46efBd148', 
+    relayer: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a', // Tetap
     
-    // Alamat B402 Relayer (Ini tetap sama)
-    relayer: '0xE1C2830d5DDd6B49E9c46EbE03a98Cb44CD8eA5a',
-    
-    // Alamat dompet server Anda (dompet yang akan MENERIMA 1 USDC)
-    serverWallet: '0xbdDD85bc42010110B8184d0fDA25659688bf935E',
-    
-    // URL Backend Anda
-    backendUrl: 'https://api.spark.ai'
+    // GANTI DENGAN DOMPET SERVER ANDA (dompet yang akan MENERIMA 1 USDC)
+    serverWallet: '0xbdDD85bc42010110B8184d0fDA25659688bf935E'
 };
 
 // ABI (Application Binary Interface) minimal untuk token ERC20
@@ -36,7 +35,7 @@ const ERC20_ABI = [
 let provider, signer, userAddress;
 let usdcContract, mytokenContract;
 
-// --- Elemen DOM ---
+// --- 2. Elemen DOM ---
 const connectSection = document.getElementById('connectSection');
 const appSection = document.getElementById('appSection');
 const walletAddressSpan = document.getElementById('walletAddress');
@@ -50,18 +49,17 @@ const slotImgs = [
     document.getElementById('slot2-img'),
     document.getElementById('slot3-img')
 ];
-// Daftar gambar simbol untuk animasi
+// Pastikan nama file gambar ini sesuai dengan yang ada di folder /images/ Anda
 const allSymbolImages = [
     'images/Jesse.png',
     'images/Base.png',
-    'images.BTC.png',
+    'images/BTC.png',
     'images/ETH.png',
     'images/Other.png'
 ];
 
 
-// --- 1. Fungsi Koneksi Wallet ---
-// ...
+// --- 3. Fungsi Koneksi Wallet (Dengan ENS FIX) ---
 async function connectWallet() {
     try {
         if (!window.ethereum) {
@@ -69,57 +67,61 @@ async function connectWallet() {
             return;
         }
 
-        // --- AWAL PERUBAHAN ---
-
+        // --- AWAL PERBAIKAN ENS ---
         // 1. Buat provider MetaMask HANYA untuk mendapatkan signer
         const metaMaskProvider = new ethers.BrowserProvider(window.ethereum);
         await metaMaskProvider.send("eth_requestAccounts", []);
         const metaMaskSigner = await metaMaskProvider.getSigner();
-        userAddress = await metaMaskSigner.getAddress(); // userAddress global di-set di sini
+        userAddress = await metaMaskSigner.getAddress();
 
-        // 2. Buat network kustom untuk BSC Testnet
+        // 2. Buat network kustom untuk BSC Testnet (non-ENS)
         const bscTestnet = new ethers.Network('bnbt', 97);
-        bscTestnet.ensAddress = null; // <-- KUNCI UTAMA: Menonaktifkan ENS
+        bscTestnet.ensAddress = null; // KUNCI UTAMA: Menonaktifkan ENS
 
         // 3. Set 'provider' global kita ke provider kustom (JsonRpcProvider)
-        // Ini akan digunakan untuk semua operasi BACA (read-only)
         provider = new ethers.JsonRpcProvider(CONFIG.rpc, bscTestnet);
         
-        // 4. Set 'signer' global kita ke signer MetaMask, TAPI terhubung ke provider kustom kita
-        // Ini akan digunakan untuk semua operasi TULIS (approve, sign)
+        // 4. Set 'signer' global kita ke signer MetaMask, TAPI terhubung ke provider kustom
         signer = metaMaskSigner.connect(provider);
+        // --- AKHIR PERBAIKAN ENS ---
 
-        // --- AKHIR PERUBAHAN ---
-
-
-        // Coba ganti ke BSC Testnet (Logika ini tetap sama)
+        // Coba ganti ke BSC Testnet
         try {
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: CONFIG.chainHex }], // '0x61'
             });
         } catch (switchError) {
-            // ... (sisa kode switch network Anda tetap sama)
+            if (switchError.code === 4902) {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: CONFIG.chainHex,
+                        chainName: CONFIG.chainName,
+                        nativeCurrency: { name: 'tBNB', symbol: 'tBNB', decimals: 18 },
+                        rpcUrls: [CONFIG.rpc],
+                        blockExplorerUrls: ['https://testnet.bscscan.com']
+                    }]
+                });
+            } else { throw switchError; }
         }
 
         connectSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         walletAddressSpan.textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
 
-        // Inisialisasi kontrak (Kode ini tetap sama)
-        // 'usdcContract' sekarang menggunakan 'signer' baru kita (yang sudah non-ENS)
-        usdcContract = new ethers.Contract(CONFIG.usdc, ERC20_ABI, signer); 
-        // 'mytokenContract' menggunakan 'provider' baru kita (non-ENS)
+        // Inisialisasi kontrak
+        usdcContract = new ethers.Contract(CONFIG.usdc, ERC20_ABI, signer);
         mytokenContract = new ethers.Contract(CONFIG.mytoken, ERC20_ABI, provider);
 
         await loadBalances();
     } catch (error) {
+        console.error(error);
         showStatus('Error connecting wallet: ' + error.message, 'error');
     }
 }
-// ... (sisa file client.js Anda)
 
-// --- 2. Fungsi Memuat Saldo ---
+// --- 4. Fungsi Memuat Saldo ---
 async function loadBalances() {
     try {
         usdcBalanceSpan.textContent = 'Loading...';
@@ -128,7 +130,7 @@ async function loadBalances() {
         const usdcBal = await usdcContract.balanceOf(userAddress);
         const mytokenBal = await mytokenContract.balanceOf(userAddress);
         
-        // Asumsi USDC punya 6 desimal, dan MYTOKEN 18 (Sesuaikan jika perlu)
+        // GANTI DESIMAL JIKA PERLU (USDC biasanya 6)
         usdcBalanceSpan.textContent = ethers.formatUnits(usdcBal, 6) + ' USDC';
         mytokenBalanceSpan.textContent = ethers.formatUnits(mytokenBal, 18) + ' MYTOKEN';
 
@@ -139,11 +141,10 @@ async function loadBalances() {
     }
 }
 
-// --- 3. Fungsi Utilitas (Status, Step, Sleep, Animasi) ---
+// --- 5. Fungsi Utilitas (Status, Step, Sleep, Animasi) ---
 function showStatus(message, type = 'info') {
     statusSection.innerHTML = `<div class="status status-${type}">${message}</div>`;
 }
-
 function resetSteps() {
     stepsSection.classList.add('hidden');
     for (let i = 1; i <= 5; i++) {
@@ -151,11 +152,8 @@ function resetSteps() {
         step.classList.remove('active', 'completed');
     }
 }
-
 function updateStep(stepNum, state) {
-    if (stepNum === 1) { // Tampilkan steps saat langkah 1 dimulai
-        stepsSection.classList.remove('hidden');
-    }
+    if (stepNum === 1) { stepsSection.classList.remove('hidden'); }
     const step = document.getElementById(`step${stepNum}`);
     if (state === 'active') {
         step.classList.add('active');
@@ -165,33 +163,24 @@ function updateStep(stepNum, state) {
         step.classList.add('completed');
     }
 }
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Fungsi Animasi Spin (dari kode kita sebelumnya)
 async function animateSpin(duration = 2000) {
     updateStep(3, 'active');
-    
     slotImgs.forEach(img => img.classList.add('spinning'));
-
-    const startTime = Date.now();
     let intervalId = setInterval(() => {
         for (const img of slotImgs) {
             const randomImg = allSymbolImages[Math.floor(Math.random() * allSymbolImages.length)];
             img.src = randomImg;
         }
     }, 80);
-
     await sleep(duration);
     clearInterval(intervalId);
-    
     slotImgs.forEach(img => img.classList.remove('spinning'));
     updateStep(3, 'completed');
 }
 
-// --- 4. FUNGSI UTAMA: SPIN SLOT ---
+// --- 6. FUNGSI UTAMA: SPIN SLOT ---
 async function spinSlot() {
     spinButton.disabled = true;
     resetSteps();
@@ -202,7 +191,7 @@ async function spinSlot() {
         updateStep(1, 'active');
         showStatus('Checking USDC approval...', 'info');
 
-        const amount = ethers.parseUnits('1', 6); // 1 USDC (asumsi 6 desimal)
+        const amount = ethers.parseUnits('1', 6); // 1 USDC (6 desimal)
         const allowance = await usdcContract.allowance(userAddress, CONFIG.relayer);
 
         if (allowance < amount) {
@@ -219,7 +208,7 @@ async function spinSlot() {
 
         const nonce = ethers.hexlify(ethers.randomBytes(32));
         const validAfter = Math.floor(Date.now() / 1000);
-        const validBefore = validAfter + 600; // Tanda tangan valid selama 10 menit
+        const validBefore = validAfter + 600; // 10 menit
 
         const domain = {
             name: 'B402',
@@ -227,7 +216,6 @@ async function spinSlot() {
             chainId: CONFIG.chainId,
             verifyingContract: CONFIG.relayer
         };
-
         const types = {
             TransferWithAuthorization: [
                 { name: 'from', type: 'address' },
@@ -238,38 +226,33 @@ async function spinSlot() {
                 { name: 'nonce', type: 'bytes32' }
             ]
         };
-
         const value = {
             from: userAddress,
-            to: CONFIG.serverWallet, // Kirim 1 USDC ke dompet server
+            to: CONFIG.serverWallet, // Bayar ke dompet server
             value: amount.toString(),
-            validAfter,
-            validBefore,
-            nonce
+            validAfter, validBefore, nonce
         };
 
         const signature = await signer.signTypedData(domain, types, value);
         updateStep(2, 'completed');
 
         // --- Step 3: Animasi dan Kirim ke Backend ---
-        // Kita jalankan animasi SECARA BERSAMAAN dengan request backend
         const animationPromise = animateSpin(2000); // Mulai animasi
 
-        // Kirim tanda tangan ke server untuk dieksekusi
+        // Kirim tanda tangan ke API backend Anda
         const response = await fetch(`${CONFIG.backendUrl}/spin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 authorization: value,
                 signature,
-                userAddress: userAddress // Kirim alamat pengguna untuk hadiah
+                userAddress: userAddress 
             })
         });
 
         const result = await response.json();
         
-        // Pastikan animasi selesai
-        await animationPromise; 
+        await animationPromise; // Pastikan animasi selesai
         updateStep(4, 'active'); // Server paying rewards
 
         if (!result.success) {
@@ -277,7 +260,6 @@ async function spinSlot() {
         }
 
         // --- Step 4 & 5: Tampilkan Hasil ---
-        // Tampilkan gambar hasil akhir
         slotImgs[0].src = `images/${result.result[0]}.png`;
         slotImgs[1].src = `images/${result.result[1]}.png`;
         slotImgs[2].src = `images/${result.result[2]}.png`;
@@ -285,7 +267,6 @@ async function spinSlot() {
         updateStep(4, 'completed');
         updateStep(5, 'completed');
         
-        // Tampilkan pesan kemenangan
         let winMessage = `You got 1000 MYTOKEN!`;
         if (result.winnings > 0) {
             winMessage = `🎉 YOU WON ${result.winnings} USDC! 🎉<br>+ ${result.tokenReward} MYTOKEN!`;
@@ -299,7 +280,6 @@ async function spinSlot() {
             'success'
         );
 
-        // Muat ulang saldo setelah beberapa detik
         setTimeout(loadBalances, 3000);
 
     } catch (error) {
